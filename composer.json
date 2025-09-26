@@ -1,0 +1,25 @@
+{
+    "name": "glugox/table-query",
+    "description": "Reusable query service with search, sort, pagination, and filters",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Glugox\\TableQuery\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Glugox",
+            "email": "glugox@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+      "php": "^8.2",
+      "illuminate/http": "^12.0",
+      "illuminate/routing": "^12.0",
+      "illuminate/support": "^12.0",
+      "illuminate/database": "^12.0"
+    }
+}
