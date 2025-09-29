@@ -206,13 +206,31 @@ class TableQueryService
      *
      * This can be extended to handle more complex filter logic.
      *
+     * search?: string
+     * sortKey?: string
+     * sortDir?: 'asc' | 'desc'
+     * page?: number
+     * per_page?: number
+     * selectedIds?: number[],
+     * allColumns?: Column[]
+     * visibleColumns?: string[]
+     * [key: string]: any
+     *
      * @param  array  $requestData  The request data (e.g. $request->all()).
      * @param  array  $selectFields  The fields available for selection.
      * @return array The prepared filters.
      */
     public function prepareFilters(array $requestData): array
     {
-        $filters = $requestData;
+        $filters = [
+            'search' => $requestData['search'] ?? '',
+            'sortKey' => $requestData['sortKey'] ?? null,
+            'sortDir' => $requestData['sortDir'] ?? null,
+            'page' => isset($requestData['page']) ? (int)$requestData['page'] : 1,
+            'per_page' => isset($requestData['per_page']) ? (int)$requestData['per_page'] : 12,
+            'selectedIds' => $requestData['selectedIds'] ?? [],
+            // Additional filters can be added here
+        ];
 
         // Exclude *_id fields
         $filteredFields = array_filter($this->modelMeta->tableFields(), function ($field) {
