@@ -38,7 +38,7 @@ class FilterRegistry
     /**
      * Get all registered filters.
      *
-     * @return Collection<int, class-string<Filter>>
+     * @return Collection<string, class-string<Filter>>
      */
     public static function all(): Collection
     {

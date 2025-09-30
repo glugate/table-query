@@ -2,12 +2,11 @@
 
 namespace Glugox\TableQuery\Services;
 
+use Glugox\ModelMeta\Contracts\Filter;
 use Glugox\ModelMeta\ModelMeta;
 use Glugox\ModelMeta\ModelMetaResolver;
-use Glugox\TableQuery\Contracts\Filter;
-use Glugox\TableQuery\Support\FilterRegistry;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +24,9 @@ class TableQueryService
      * Constructor
      */
     public function __construct(
+        /**
+         * @var SearchService
+         */
         protected SearchService $searchService,
     ) {}
 
@@ -38,7 +40,8 @@ class TableQueryService
     }
 
     /**
-     * @param ModelMeta
+     * @param $modelMeta ModelMeta
+     * @return TableQueryService
      */
     public function setModelMeta(ModelMeta $modelMeta): self
     {
@@ -64,14 +67,11 @@ class TableQueryService
      * $items = $query->paginate(12);
      * ```
      *
-     * @param  Builder  $query  The Eloquent query builder instance.
-     * @param  array  $searchableFields  Fields to search in.
-     * @param  string[]  $relations  Relations to eager load.
-     * @param  array  $selectFields  Fields to select in the query.
-     * @param  string|null  $searchString  The search string from request.
-     * @param  string|null  $defaultSortField  Default field to sort by if none specified in request.
-     * @param  string|null  $defaultSortDir  Default sort direction ('asc' or 'desc').
-     * @return Builder The modified query builder instance.
+     * @param Builder<Model> $query The Eloquent query builder instance.
+     * @param string|null $searchString The search string from request.
+     * @param string|null $defaultSortField Default field to sort by if none specified in request.
+     * @param string|null $defaultSortDir Default sort direction ('asc' or 'desc').
+     * @return Builder<Model> The modified query builder instance.
      */
     public function applyAll(
         Builder $query,
@@ -90,7 +90,7 @@ class TableQueryService
         $relations = $this->modelMeta->relationsNames();
 
         // Eager load relations
-        if ($relations !== null && $relations !== []) {
+        if ($relations !== []) {
             $query->with($relations);
         }
 
@@ -101,6 +101,7 @@ class TableQueryService
 
         // Apply search
         if ($searchString !== null && $searchString !== '' && $searchString !== '0') {
+            /** @var Builder<Model> $query */
             $query = $this->searchService->apply(
                 $query,
                 $searchString,
@@ -123,9 +124,9 @@ class TableQueryService
     /**
      * Apply registered filters to a query based on request parameters.
      *
-     * @param Builder $query The Eloquent query builder instance.
-     * @param array $filters
-     * @return Builder The modified query builder instance.
+     * @param Builder<Model> $query The Eloquent query builder instance.
+     * @param array<string, mixed> $filters
+     * @return Builder<Model> The modified query builder instance.
      */
     public function applyFilters(Builder $query, array $filters): Builder
     {
@@ -135,15 +136,17 @@ class TableQueryService
             }
 
             try {
-                $filterClass = FilterRegistry::for($key);
-                if(!$filterClass) {
-                    Log::warning("Filter class not found for key: {$key}");
+                /** @var Filter[] $filters */
+                $filters = $this->modelMeta->filtersForField($key);
+                if($filters === []) {
+                    Log::warning("Filters not found for key: {$key}");
                     continue;
                 }
 
-                /** @var Filter $filter */
-                $filter = app($filterClass);
-                $query = $filter->apply($query, $filterConfig, $value);
+                foreach ($filters as $filter) {
+                    $query = $filter->apply($query, $value);
+                }
+
             } catch (\Throwable $e) {
                 // log or ignore
             }

@@ -10,7 +10,7 @@ class TableQueryServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        FilterRegistry::register('enum', new EnumFilter());
+        //
     }
 
     public function boot(): void
